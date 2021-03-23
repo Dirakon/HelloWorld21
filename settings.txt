@@ -1,0 +1,2 @@
+'H'='D:\Projects\WebstormProjects\HW21\HnoReact/index.html','waitBefore'='0.1','waitAfter'='0.1','clickTime'='0.1'
+'H'='D:\Projects\WebstormProjects\HW21\HnoReact/index.html','waitBefore'='2','clickTime'='0.1'
