@@ -14,7 +14,6 @@ import os
 
 def H(clickTime = 0.1):
     global driver
-    print(clickTime)
 
     buttons = driver.find_elements_by_tag_name('button')
     specialRange = range(15, 30)  # Полоска, соединяющая правую и левую часть 'H'
@@ -23,7 +22,7 @@ def H(clickTime = 0.1):
 
     for i in ids:
         buttons[i].click()
-        time.sleep(0.1)
+        time.sleep(clickTime)
 
 
 class LetterScript:
@@ -54,7 +53,7 @@ class LetterScript:
             time.sleep(self.waitBefore)
 
         driver.get(self.path)
-        eval(self.letter)(self.args)
+        eval(self.letter+self.args)
 
         if self.waitAfter is not None:
             time.sleep(self.waitAfter)
