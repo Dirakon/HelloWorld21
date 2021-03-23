@@ -15,8 +15,6 @@ import os
 def H(clickTime = 0.1):
     global driver
     print(clickTime)
-    file = 'D:\\Projects\\WebstormProjects\\HW21\\HnoReact\\index.html'
-    driver.get(file)
 
     buttons = driver.find_elements_by_tag_name('button')
     specialRange = range(15, 30)  # Полоска, соединяющая правую и левую часть 'H'
