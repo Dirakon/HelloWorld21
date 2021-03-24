@@ -13,8 +13,6 @@ import tkinter as tk
 import os
 
 def H(clickTime = 0.1):
-    global driver
-
     buttons = driver.find_elements_by_tag_name('button')
     specialRange = range(15, 30)  # Полоска, соединяющая правую и левую часть 'H'
     # Нас интересует кнопка, если она находится в левой или правой части и в полоске.
@@ -23,6 +21,40 @@ def H(clickTime = 0.1):
     for i in ids:
         buttons[i].click()
         time.sleep(clickTime)
+
+
+def E(mapPath = "Emap.txt", moveTime = 0.1):
+    global driver
+    body = driver.find_element_by_tag_name('body')
+    eMap = open(mapPath,'r').read().split('\n')
+    dictionariedMap = {}
+    for row in range(len(eMap)):
+        for symbol in range(len(eMap[row])):
+            dictionariedMap[eMap[row][symbol]] = [row,symbol]
+    curCoords = dictionariedMap['1']
+    curSymbol = '1'
+    while True:
+        if curSymbol == '9':
+            curSymbol = 'A'
+        else:
+            curSymbol = chr(ord(curSymbol) + 1)
+        if curSymbol not in dictionariedMap:
+            return
+        nextCoords = dictionariedMap[curSymbol]
+        if nextCoords[0] > curCoords[0]:
+            # Вниз
+            body.send_keys('S')
+        elif  nextCoords[0] < curCoords[0]:
+            body.send_keys('W')
+            # Вверх
+        elif  nextCoords[1] > curCoords[1]:
+            body.send_keys('D')
+            # Вправо
+        elif  nextCoords[1] < curCoords[1]:
+            body.send_keys('A')
+            # Влево
+        curCoords=nextCoords
+        time.sleep(moveTime)
 
 
 class LetterScript:
@@ -44,18 +76,17 @@ class LetterScript:
             string +=i + '=' + args[i]
         string += ')'
         self.args = string
-        print(string)
 
     def executeScript(self):
         global driver
 
-        if self.waitBefore is not None:
+        if hasattr(self,'waitBefore'):
             time.sleep(self.waitBefore)
 
         driver.get(self.path)
         eval(self.letter+self.args)
 
-        if self.waitAfter is not None:
+        if hasattr(self,'waitAfter'):
             time.sleep(self.waitAfter)
 
 def setup():
@@ -84,6 +115,6 @@ for task in task_list:
     task.executeScript()
 
 
-time.sleep(100)
 
 driver.close()
+time.sleep(100)
