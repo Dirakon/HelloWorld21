@@ -11,6 +11,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 import time
 import tkinter as tk
 import os
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+
 
 def H(clickTime = 0.1):
     buttons = driver.find_elements_by_tag_name('button')
@@ -56,6 +59,10 @@ def E(mapPath = "Emap.txt", moveTime = 0.1):
         curCoords=nextCoords
         time.sleep(moveTime)
 
+def W(sideToGo = "right"):
+    print(sideToGo)
+    time.sleep(1000)
+
 
 class LetterScript:
     def __init__(self,letter,path, args):
@@ -99,15 +106,21 @@ def setup():
         letterInfo = args[0].split('=')
         args = args[1:]
         letter = letterInfo[0].split("'")[1]
-        curPath = ''  #os.getcwd() +'\\'      #Раскомментировать, когда все файлы в сабдиректориях этой папки
-        path = 'file:///' + curPath + letterInfo[1].split("'")[1]
+        writtenPath = letterInfo[1].split("'")[1]
+        if writtenPath.startswith('http'):
+            path = writtenPath
+        else:
+            curPath = ''  #os.getcwd() +'\\'      #Раскомментировать, когда все файлы в сабдиректориях этой папки
+            path = 'file:///' + curPath + writtenPath
         argsDict = {}
         for arg in args:
             arg = arg.split('=')
             argsDict[arg[0].split("'")[1]] = arg[1].split("'")[1]
         task_list.append(LetterScript(letter,path,argsDict))
 
-    driver = webdriver.Chrome(ChromeDriverManager().install())
+    options = webdriver.ChromeOptions()
+    options.add_argument("--allow-file-access-from-files")
+    driver = webdriver.Chrome(ChromeDriverManager().install(),options=options)
 
 
 setup()

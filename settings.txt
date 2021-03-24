@@ -1,2 +1,3 @@
+'W'='D:\Projects\WebstormProjects\HW21\HnoReact\W\index.html','waitAfter'='1','sideToGo' = '"left"'
 'H'='D:\Projects\WebstormProjects\HW21\HnoReact\H\index.html','waitAfter'='1','clickTime'='0.1'
 'E'='D:\Projects\WebstormProjects\HW21\HnoReact\E\index.html','waitAfter'='1','mapPath'='"mapOfE.txt"','moveTime'='0.1'
