@@ -11,8 +11,43 @@ from selenium.webdriver.common.action_chains import ActionChains
 import time
 import tkinter as tk
 import os
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
+from http.server import HTTPServer, CGIHTTPRequestHandler
+import http.server
+import socketserver
+import json, time
 
+
+def dispatchKeyEvent( name, options):
+    global driver
+    options["type"] = name
+    body = json.dumps({'cmd': 'Input.dispatchKeyEvent', 'params': options})
+    resource = "/session/%s/chromium/send_command" % driver.session_id
+    url = driver.command_executor._url + resource
+    driver.command_executor._request('POST', url, body)
+
+# Функция, симулируяющая удержание кнопки на определённый промежуток.
+def holdKey(key, duration):
+    endtime = time.time() + duration
+    options = {
+        "code": "Key"+key,
+        "key": key,
+        "text": key,
+        "unmodifiedText": key,
+        "nativeVirtualKeyCode": ord(key),
+        "windowsVirtualKeyCode": ord(key)
+    }
+
+    while True:
+        dispatchKeyEvent( "rawKeyDown", options)
+        dispatchKeyEvent( "char", options)
+
+        if time.time() > endtime:
+            dispatchKeyEvent( "keyUp", options)
+            break
+
+        options["autoRepeat"] = True
+        time.sleep(0.01)
 
 
 def H(clickTime = 0.1):
@@ -29,7 +64,7 @@ def H(clickTime = 0.1):
 def E(mapPath = "Emap.txt", moveTime = 0.1):
     global driver
     body = driver.find_element_by_tag_name('body')
-    eMap = open(mapPath,'r').read().split('\n')
+    eMap = open(currentDirectory + mapPath,'r').read().split('\n')
     dictionariedMap = {}
     for row in range(len(eMap)):
         for symbol in range(len(eMap[row])):
@@ -60,8 +95,15 @@ def E(mapPath = "Emap.txt", moveTime = 0.1):
         time.sleep(moveTime)
 
 def W(sideToGo = "right"):
-    print(sideToGo)
-    time.sleep(1000)
+    global driver
+    indicator = driver.find_element_by_tag_name('div')
+    if sideToGo == 'right':
+        key = 'D'
+    else:
+        key = 'A'
+
+    while indicator.get_attribute("class") != 'done':
+        holdKey(key=key,duration=0.1)
 
 
 class LetterScript:
@@ -89,7 +131,7 @@ class LetterScript:
 
         if hasattr(self,'waitBefore'):
             time.sleep(self.waitBefore)
-
+        print(self.path)
         driver.get(self.path)
         eval(self.letter+self.args)
 
@@ -99,8 +141,29 @@ class LetterScript:
 def setup():
     global driver
     global task_list
+    global currentDirectory
+    # Make sure the server is created at current directory
+    currentDirectory = os.getcwd() + '\\'
+
+
+
+    os.chdir('D:\\Projects\\WebstormProjects\\HW21\\HnoReact')
+
+    PORT = 1337
+
+    Handler = http.server.SimpleHTTPRequestHandler
+    Handler.extensions_map.update({
+        ".js": "application/javascript",
+    })
+
+    httpd = socketserver.TCPServer(("", PORT), Handler)
+
+    # Start the web server
+    x = threading.Thread(target=httpd.serve_forever)
+    x.start()
+
     task_list = []
-    settings = open('settings.txt','r').read().split('\n')
+    settings = open(currentDirectory + 'settings.txt','r').read().split('\n')
     for i in settings:
         args = i.split(',')
         letterInfo = args[0].split('=')
@@ -110,8 +173,8 @@ def setup():
         if writtenPath.startswith('http'):
             path = writtenPath
         else:
-            curPath = ''  #os.getcwd() +'\\'      #Раскомментировать, когда все файлы в сабдиректориях этой папки
-            path = 'file:///' + curPath + writtenPath
+            curPath = ''
+            path = 'http://localhost:'+str(PORT)+'/' + curPath + writtenPath
         argsDict = {}
         for arg in args:
             arg = arg.split('=')
