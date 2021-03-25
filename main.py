@@ -144,6 +144,17 @@ def R(mapPath = "Rmap.txt", moveTime = 0.1):
         else:
             body.send_keys('S')
 
+def D(song = "D|0.5|hD|2.0"):
+    global driver
+    keys = driver.find_elements_by_tag_name('div')
+    dictionariedKeys = {}
+    for key in keys:
+        dictionariedKeys[key.get_attribute("id")]=key
+    for action in song.split('|'):
+        if '.' in action:
+            time.sleep(float(action))
+        else:
+            dictionariedKeys[action].click()
 
 
 class LetterScript:
