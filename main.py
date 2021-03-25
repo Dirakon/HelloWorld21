@@ -106,6 +106,46 @@ def W(sideToGo = "right"):
         holdKey(key=key,duration=0.1)
 
 
+def R(mapPath = "Rmap.txt", moveTime = 0.1):
+    global driver
+    body = driver.find_element_by_tag_name('body')
+    indicator = driver.find_element_by_class_name('notDone')
+    rMap = open(currentDirectory + mapPath,'r').read().split('\n')
+    dictionariedMap = {}
+    for i in range(len(rMap)):
+        row = rMap[i].split(':')
+        if len(row)==2:
+            row = row[1]
+            nums = row.split(',')
+            for num in nums:
+                dictionariedMap[int(num)] = i
+    curColumn = None
+    curNum = -1
+    cellsToCheck = driver.find_elements_by_tag_name('div')[1:11]
+    while True:
+        time.sleep(moveTime)
+        if indicator.get_attribute('class') == 'done':
+            return
+        anyCellIsFigure = False
+        for cell in cellsToCheck:
+            if cell.get_attribute('class') == 'figure':
+                anyCellIsFigure=True
+                break
+        if anyCellIsFigure:
+            curNum+=1
+            curColumn=2
+            print(curNum)
+        if curColumn > dictionariedMap[curNum]:
+            body.send_keys('A')
+            curColumn-=1
+        elif curColumn < dictionariedMap[curNum]:
+            body.send_keys('D')
+            curColumn+=1
+        else:
+            body.send_keys('S')
+
+
+
 class LetterScript:
     def __init__(self,letter,path, args):
         self.letter=letter

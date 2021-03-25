@@ -1,3 +1,4 @@
+'R'='R/index.html','waitAfter'='1','mapPath'='"mapOfR.txt"','moveTime'='0.5'
 'H'='H/index.html','waitAfter'='1','clickTime'='0.1'
 'E'='E/index.html','waitAfter'='1','mapPath'='"mapOfE.txt"','moveTime'='0.1'
 'W'='W/index.html','waitAfter'='1','sideToGo' = '"left"'
