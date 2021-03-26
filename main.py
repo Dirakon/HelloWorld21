@@ -259,6 +259,9 @@ def O(moveTime = 0.1, minMove = 20,maxMove = 40,radius = 100, radiusRandomness =
         time.sleep(moveTime)
 
 
+def SPACE():
+    return
+
 class LetterScript:
     def __init__(self, letter, path, args):
         self.letter = letter
