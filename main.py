@@ -1,5 +1,6 @@
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver import ActionChains
 import time
 import os
 import threading
@@ -8,7 +9,8 @@ import socketserver
 import json
 import pyautogui
 import shutil
-
+import math
+from random import randrange
 screenshotsTaken = 0
 screenshotFolder = "screenshots\\"
 
@@ -204,7 +206,7 @@ def D(song = "D|0.5|hD|2.0"):
             dictionariedKeys[action].click()
 
 
-def exc(moveTime = 999):
+def exc(moveTime = 0.5):
     global driver
     global currentDirectory
     global screenshotsTaken
@@ -221,19 +223,41 @@ def exc(moveTime = 999):
     currentScreenshotId = 0
 
     serverPath =  os.getcwd()
-    curUrl = driver.current_url.replace('http://','').replace('https://','')
+    curUrl = driver.current_url.replace('http://', '').replace('https://', '')
 
-    print(curUrl)
-    screenUrl = serverPath +  curUrl[curUrl.find('/'):curUrl.rfind('/')+1] + screenshotFolder
-    print(screenUrl)
+    screenUrl = serverPath + curUrl[curUrl.find('/'):curUrl.rfind('/')+1] + screenshotFolder
 
-    shutil.rmtree(screenUrl,ignore_errors=True)
+    shutil.rmtree(screenUrl, ignore_errors=True)
     shutil.copytree(currentDirectory + screenshotFolder, screenUrl)
 
     for cell in neededCells:
         time.sleep(moveTime)
         driver.execute_script("""arguments[0].innerHTML = '""" + "<img style = \"width: 100%; height: 100%;\" src = \\'" + screenshotFolder.replace('\\','/') + "screenshot" + str(currentScreenshotId+1) + ".png" +"\\'>" + "'", cell)
         currentScreenshotId = (currentScreenshotId+1) % screenshotsTaken
+
+
+def O(moveTime = 0.1, minMove = 20,maxMove = 40,radius = 100, radiusRandomness = 41):
+    global driver
+    body = driver.find_element_by_tag_name('body')
+    grad = 0
+    center = driver.get_window_size()
+    center['width']/=2
+    center['height']/=2
+    click = ActionChains(driver).click()
+    ActionChains(driver).move_to_element_with_offset(body, center['width']+math.cos(math.radians(grad))*radius,  center['height']+math.sin(math.radians(grad))*radius).click().perform()
+    while grad < 360:
+        grad += randrange(maxMove+1-minMove)+minMove
+        radiusMove = randrange(radiusRandomness)-radiusRandomness//2
+        if grad >= 360:
+            grad=360
+            radiusMove=0
+        coords = [center['width']+math.cos(math.radians(grad))*(radius+radiusMove),  center['height']+math.sin(math.radians(grad))*(radius+radiusMove)]
+        action = ActionChains(driver).move_to_element_with_offset(body, coords[0],coords[1])
+        action.perform()
+        click.perform()
+        click.perform()
+        time.sleep(moveTime)
+
 
 class LetterScript:
     def __init__(self, letter, path, args):
