@@ -18,17 +18,26 @@ import socketserver
 import json, time
 
 
-def dispatchKeyEvent( name, options):
+def dispatchKeyEvent(name, options):
     global driver
+
+    # Описываем событие
     options["type"] = name
     body = json.dumps({'cmd': 'Input.dispatchKeyEvent', 'params': options})
+
+    # Вычисляем executor_url текущего браузера, на который му будем посылать созданное событие
     resource = "/session/%s/chromium/send_command" % driver.session_id
     url = driver.command_executor._url + resource
+
+    # Посылаем событие
     driver.command_executor._request('POST', url, body)
 
 # Функция, симулируяющая удержание кнопки на определённый промежуток.
 def holdKey(key, duration):
+    # Вычисляем время окончания работы функции
     endtime = time.time() + duration
+
+    # Опции для посылки в событиях
     options = {
         "code": "Key"+key,
         "key": key,
@@ -39,13 +48,16 @@ def holdKey(key, duration):
     }
 
     while True:
+        # Отправляет все необходимые события
         dispatchKeyEvent( "rawKeyDown", options)
         dispatchKeyEvent( "char", options)
 
+        # Если пора заканчивать, заканчиваем, при этом не забывая о событии поднятия клавиши
         if time.time() > endtime:
             dispatchKeyEvent( "keyUp", options)
             break
 
+        # После первого раза все нажатия являеются повторами, что надо отметить в опциях
         options["autoRepeat"] = True
         time.sleep(0.01)
 
@@ -73,11 +85,18 @@ def E(mapPath = "Emap.txt", moveTime = 0.1):
     curSymbol = '1'
     while True:
         if curSymbol == '9':
+            # После цифр, оканчивающихся девяткой, будут рассматриваться английские заглавные буквы в алфавитном порядке
             curSymbol = 'A'
         else:
+            # Код следующего символа (если мы не на девятке) всегда можно получить, добавив единицу к коду текущего
             curSymbol = chr(ord(curSymbol) + 1)
+
+        # Если текущий символ отутствует на карте, мы считаем, что алгоритм выполнен
         if curSymbol not in dictionariedMap:
             return
+
+        # В зависимости от расположения следующего символа относительно текущего, мы делаем соответствующее действие
+        # (Предполагается, что от каждого символа можно попасть к следующему одним движением змеи)
         nextCoords = dictionariedMap[curSymbol]
         if nextCoords[0] > curCoords[0]:
             # Вниз
@@ -96,62 +115,93 @@ def E(mapPath = "Emap.txt", moveTime = 0.1):
 
 def W(sideToGo = "right"):
     global driver
+
+    # Отыскиваем индикатор
     indicator = driver.find_element_by_tag_name('div')
+
+    # Выбираем клавишу в зависимости от требуемого направления
     if sideToGo == 'right':
         key = 'D'
     else:
         key = 'A'
 
+    # Пока индикатор не сообщает о бессмысленности наших действий, продолжаем вращение
     while indicator.get_attribute("class") != 'done':
         holdKey(key=key,duration=0.1)
 
 
 def R(mapPath = "Rmap.txt", moveTime = 0.1):
     global driver
+
     body = driver.find_element_by_tag_name('body')
+    # Отыскиваем индикатор
     indicator = driver.find_element_by_class_name('notDone')
-    rMap = open(currentDirectory + mapPath,'r').read().split('\n')
+
+    # Считываем и анализируем посланную нам карту, в которой в каждой строке слева написана x координата.
+    # Разделённые запятыми числа, справа от координат, - номера фигур, которые мы попытаемся расположить на
+    # Соответствующих x координатах.
+    # (К примеру, '1:2,3' значит, что мы попытаемся расположить фигуру#2 и фигуру#3 на столбце#1) (Отсчёт с нуля).
+    rMap = open(currentDirectory + mapPath, 'r').read().split('\n')
     dictionariedMap = {}
     for i in range(len(rMap)):
         row = rMap[i].split(':')
-        if len(row)==2:
+
+        # Если в строке присутствовало разделение двоеточием, читаем вторую часть деления.
+        if len(row) == 2:
             row = row[1]
             nums = row.split(',')
             for num in nums:
+                # Заполняем словарь, используя как ключи номера фигур, а как значения - x координаты
                 dictionariedMap[int(num)] = i
+
     curColumn = None
     curNum = -1
+    # Отдельно находим верхнюю строку
     cellsToCheck = driver.find_elements_by_tag_name('div')[1:11]
     while True:
         time.sleep(moveTime)
+
+        # Если индикатор сообщает нам о завершении игры, заканчиваем
         if indicator.get_attribute('class') == 'done':
             return
+
+        # Проверяем первую строку: если там присутствует фигура, то, очевидно, эта фигура появилась только что, а
+        # Старая приземлилась (или, может, старой ещё не было).
         anyCellIsFigure = False
         for cell in cellsToCheck:
             if cell.get_attribute('class') == 'figure':
                 anyCellIsFigure=True
                 break
         if anyCellIsFigure:
+            # При появляении новой фигуры, увеличиваем номер текущей фигуры и обнуляем координаты
             curNum+=1
             curColumn=2
-            print(curNum)
+
+        # В зависимости от расположения интересущего нас столбца относительно текущего, мы делаем соответствующее действие
         if curColumn > dictionariedMap[curNum]:
             body.send_keys('A')
-            curColumn-=1
+            curColumn -= 1
         elif curColumn < dictionariedMap[curNum]:
             body.send_keys('D')
-            curColumn+=1
+            curColumn += 1
         else:
             body.send_keys('S')
 
 def D(song = "D|0.5|hD|2.0"):
     global driver
+
+    # Находим все клавишиш
     keys = driver.find_elements_by_tag_name('div')
+
+    # Удобно располагаем их в словаре, за ключ принимая их уникальный id.
     dictionariedKeys = {}
     for key in keys:
         dictionariedKeys[key.get_attribute("id")]=key
+
+    # Следуем указаниям из отправленной нам песни, в которой вертикальными чертами отделены действия, которые могут
+    # содержать либо паузы (в секундах), либо id клавиши, на которую нужно нажать.
     for action in song.split('|'):
-        if '.' in action:
+        if action not in dictionariedKeys:
             time.sleep(float(action))
         else:
             dictionariedKeys[action].click()
