@@ -1,22 +1,16 @@
-import requests
-import selenium
-from bs4 import BeautifulSoup
-from lxml import html
-from urllib.request import Request, urlopen
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.action_chains import ActionChains
 import time
-import tkinter as tk
 import os
 import threading
-from http.server import HTTPServer, CGIHTTPRequestHandler
 import http.server
 import socketserver
-import json, time
+import json
+import pyautogui
+import shutil
 
+screenshotsTaken = 0
+screenshotFolder = "screenshots\\"
 
 def dispatchKeyEvent(name, options):
     global driver
@@ -31,6 +25,7 @@ def dispatchKeyEvent(name, options):
 
     # Посылаем событие
     driver.command_executor._request('POST', url, body)
+
 
 # Функция, симулируяющая удержание кнопки на определённый промежуток.
 def holdKey(key, duration):
@@ -76,11 +71,11 @@ def H(clickTime = 0.1):
 def E(mapPath = "Emap.txt", moveTime = 0.1):
     global driver
     body = driver.find_element_by_tag_name('body')
-    eMap = open(currentDirectory + mapPath,'r').read().split('\n')
+    eMap = open(currentDirectory + mapPath, 'r').read().split('\n')
     dictionariedMap = {}
     for row in range(len(eMap)):
         for symbol in range(len(eMap[row])):
-            dictionariedMap[eMap[row][symbol]] = [row,symbol]
+            dictionariedMap[eMap[row][symbol]] = [row, symbol]
     curCoords = dictionariedMap['1']
     curSymbol = '1'
     while True:
@@ -101,17 +96,18 @@ def E(mapPath = "Emap.txt", moveTime = 0.1):
         if nextCoords[0] > curCoords[0]:
             # Вниз
             body.send_keys('S')
-        elif  nextCoords[0] < curCoords[0]:
+        elif nextCoords[0] < curCoords[0]:
             body.send_keys('W')
             # Вверх
-        elif  nextCoords[1] > curCoords[1]:
+        elif nextCoords[1] > curCoords[1]:
             body.send_keys('D')
             # Вправо
-        elif  nextCoords[1] < curCoords[1]:
+        elif nextCoords[1] < curCoords[1]:
             body.send_keys('A')
             # Влево
-        curCoords=nextCoords
+        curCoords = nextCoords
         time.sleep(moveTime)
+
 
 def W(sideToGo = "right"):
     global driver
@@ -127,7 +123,7 @@ def W(sideToGo = "right"):
 
     # Пока индикатор не сообщает о бессмысленности наших действий, продолжаем вращение
     while indicator.get_attribute("class") != 'done':
-        holdKey(key=key,duration=0.1)
+        holdKey(key=key, duration=0.1)
 
 
 def R(mapPath = "Rmap.txt", moveTime = 0.1):
@@ -170,12 +166,12 @@ def R(mapPath = "Rmap.txt", moveTime = 0.1):
         anyCellIsFigure = False
         for cell in cellsToCheck:
             if cell.get_attribute('class') == 'figure':
-                anyCellIsFigure=True
+                anyCellIsFigure = True
                 break
         if anyCellIsFigure:
             # При появляении новой фигуры, увеличиваем номер текущей фигуры и обнуляем координаты
-            curNum+=1
-            curColumn=2
+            curNum += 1
+            curColumn = 2
 
         # В зависимости от расположения интересущего нас столбца относительно текущего, мы делаем соответствующее действие
         if curColumn > dictionariedMap[curNum]:
@@ -187,6 +183,7 @@ def R(mapPath = "Rmap.txt", moveTime = 0.1):
         else:
             body.send_keys('S')
 
+
 def D(song = "D|0.5|hD|2.0"):
     global driver
 
@@ -196,7 +193,7 @@ def D(song = "D|0.5|hD|2.0"):
     # Удобно располагаем их в словаре, за ключ принимая их уникальный id.
     dictionariedKeys = {}
     for key in keys:
-        dictionariedKeys[key.get_attribute("id")]=key
+        dictionariedKeys[key.get_attribute("id")] = key
 
     # Следуем указаниям из отправленной нам песни, в которой вертикальными чертами отделены действия, которые могут
     # содержать либо паузы (в секундах), либо id клавиши, на которую нужно нажать.
@@ -207,10 +204,41 @@ def D(song = "D|0.5|hD|2.0"):
             dictionariedKeys[action].click()
 
 
+def exc(moveTime = 999):
+    global driver
+    global currentDirectory
+    global screenshotsTaken
+    # Находим все клетки
+    cells = driver.find_elements_by_tag_name('div')
+
+    neededCells = []
+
+    for cellId in range(len(cells)):
+        if ((cellId - 2) % 6 == 0 and (cellId-2)/6 < 3) \
+                or ((cellId - 3) % 6 == 0 and (cellId-3)/6 != 4) \
+                or ((cellId - 4) % 6 == 0 and (cellId-4) / 6 < 3):
+            neededCells.append(cells[cellId])
+    currentScreenshotId = 0
+
+    serverPath =  os.getcwd()
+    curUrl = driver.current_url.replace('http://','').replace('https://','')
+
+    print(curUrl)
+    screenUrl = serverPath +  curUrl[curUrl.find('/'):curUrl.rfind('/')+1] + screenshotFolder
+    print(screenUrl)
+
+    shutil.rmtree(screenUrl,ignore_errors=True)
+    shutil.copytree(currentDirectory + screenshotFolder, screenUrl)
+
+    for cell in neededCells:
+        time.sleep(moveTime)
+        driver.execute_script("""arguments[0].innerHTML = '""" + "<img style = \"width: 100%; height: 100%;\" src = \\'" + screenshotFolder.replace('\\','/') + "screenshot" + str(currentScreenshotId+1) + ".png" +"\\'>" + "'", cell)
+        currentScreenshotId = (currentScreenshotId+1) % screenshotsTaken
+
 class LetterScript:
-    def __init__(self,letter,path, args):
-        self.letter=letter
-        self.path=path
+    def __init__(self, letter, path, args):
+        self.letter = letter
+        self.path = path
         if 'waitBefore' in args:
             self.waitBefore=float(args['waitBefore'])
             args.pop('waitBefore')
@@ -221,23 +249,35 @@ class LetterScript:
         string = "("
         for i in args:
             if firstDone:
-                string +=','
-            firstDone=True
-            string +=i + '=' + args[i]
+                string += ','
+            firstDone = True
+            string += i + '=' + args[i]
         string += ')'
         self.args = string
+
 
     def executeScript(self):
         global driver
 
         if hasattr(self,'waitBefore'):
             time.sleep(self.waitBefore)
-        print(self.path)
+
         driver.get(self.path)
         eval(self.letter+self.args)
 
+        takeScreenshot()
+
         if hasattr(self,'waitAfter'):
             time.sleep(self.waitAfter)
+
+
+def takeScreenshot():
+    global currentDirectory
+    global screenshotsTaken
+    myScreenshot = pyautogui.screenshot()
+    myScreenshot.save(currentDirectory + screenshotFolder + 'screenshot' + str(screenshotsTaken + 1) + ".png")
+    screenshotsTaken += 1
+
 
 def setup():
     global driver
@@ -264,7 +304,7 @@ def setup():
     x.start()
 
     task_list = []
-    settings = open(currentDirectory + 'settings.txt','r').read().split('\n')
+    settings = open(currentDirectory + 'settings.txt', 'r').read().split('\n')
     for i in settings:
         args = i.split(',')
         letterInfo = args[0].split('=')
@@ -284,7 +324,8 @@ def setup():
 
     options = webdriver.ChromeOptions()
     options.add_argument("--allow-file-access-from-files")
-    driver = webdriver.Chrome(ChromeDriverManager().install(),options=options)
+    options.add_argument("--start-maximized")
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
 
 setup()
