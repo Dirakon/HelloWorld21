@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver import ActionChains
 import time
@@ -236,7 +237,7 @@ def exc(moveTime = 0.5):
         currentScreenshotId = (currentScreenshotId+1) % screenshotsTaken
 
 
-def O(moveTime = 0.1, minMove = 20,maxMove = 40,radius = 100, radiusRandomness = 41):
+def O(moveTime = 0.1, minMove = 20,maxMove = 40,radius = 100, radiusRandomness = 41, fullCircles = 3):
     global driver
     body = driver.find_element_by_tag_name('body')
     grad = 0
@@ -245,11 +246,12 @@ def O(moveTime = 0.1, minMove = 20,maxMove = 40,radius = 100, radiusRandomness =
     center['height']/=2
     click = ActionChains(driver).click()
     ActionChains(driver).move_to_element_with_offset(body, center['width']+math.cos(math.radians(grad))*radius,  center['height']+math.sin(math.radians(grad))*radius).click().perform()
-    while grad < 360:
+    maxGrad = 360*fullCircles
+    while grad < maxGrad:
         grad += randrange(maxMove+1-minMove)+minMove
         radiusMove = randrange(radiusRandomness)-radiusRandomness//2
-        if grad >= 360:
-            grad=360
+        if grad >= maxGrad:
+            grad=maxGrad
             radiusMove=0
         coords = [center['width']+math.cos(math.radians(grad))*(radius+radiusMove),  center['height']+math.sin(math.radians(grad))*(radius+radiusMove)]
         action = ActionChains(driver).move_to_element_with_offset(body, coords[0],coords[1])
@@ -261,6 +263,41 @@ def O(moveTime = 0.1, minMove = 20,maxMove = 40,radius = 100, radiusRandomness =
 
 def SPACE():
     return
+
+def L(moveTime = 0.01, wordAmount = 1000, wordsAtOnce = 10):
+    global driver
+    body = driver.find_element_by_tag_name('body')
+
+    window_before = driver.current_window_handle
+
+    link = 'https://www.wordfinders.com/words-starting-with-l/'
+    driver.execute_script('window.open("' + link + '","_blank");')
+    window_now = driver.window_handles[-1]
+    driver.switch_to_window(window_now)
+
+    words = []
+    for el in driver.find_elements_by_tag_name('a')[:wordAmount]:
+        word = el.get_attribute('innerHTML')
+        if word.startswith('l'):
+            words.append(word)
+
+    driver.close()
+    driver.switch_to_window(window_before)
+
+
+
+
+    curWordId = 0
+    texts = [driver.find_element_by_class_name('vert'),driver.find_element_by_class_name('hor')]
+    for text in texts:
+        while text.get_attribute('contenteditable') == 'true':
+            sentence = ""
+            for _ in range(wordsAtOnce):
+                sentence+=words[curWordId] + ' '
+                curWordId = (curWordId+1)%len(words)
+            text.send_keys(sentence)
+            time.sleep(moveTime)
+
 
 class LetterScript:
     def __init__(self, letter, path, args):

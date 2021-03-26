@@ -1,5 +1,6 @@
+'L'='L/index.html','waitAfter'='3','moveTime'='0.01','wordAmount' = '100','wordsAtOnce'='10'
+'O'='O/index.html','waitAfter'='1','moveTime'='0.1','minMove'='20','maxMove'='40','radius'='200', 'radiusRandomness' = '41', 'fullCircles' = '3'
 'SPACE'='SPACE/index.html','waitAfter'='5'
-'O'='O/index.html','waitAfter'='1','moveTime'='0.1','minMove'='20','maxMove'='40','radius'='200', 'radiusRandomness' = '41'
 'D'='D/index.html','waitAfter'='1','song' = '"D|1.2|F|0.6|A|0.3|hD|1.2|A|0.6|F|0.6|A|1.2|D|1.5"'
 'R'='R/index.html','waitAfter'='1','mapPath'='"mapOfR.txt"','moveTime'='0.5'
 'H'='H/index.html','waitAfter'='1','clickTime'='0.1'
