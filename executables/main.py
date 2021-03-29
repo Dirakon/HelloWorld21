@@ -14,7 +14,7 @@ import math
 from random import randrange
 screenshotsTaken = 0
 screenshotFolder = "screenshots\\"
-
+settingsFolder = "config\\"
 def dispatchKeyEvent(name, options):
     global driver
 
@@ -60,7 +60,7 @@ def holdKey(key, duration):
         time.sleep(0.01)
 
 
-def H(clickTime = 0.1):
+def H(moveTime = 0.1):
     buttons = driver.find_elements_by_tag_name('button')
     specialRange = range(15, 30)  # Полоска, соединяющая правую и левую часть 'H'
     # Нас интересует кнопка, если она находится в левой или правой части и в полоске.
@@ -68,13 +68,13 @@ def H(clickTime = 0.1):
 
     for i in ids:
         buttons[i].click()
-        time.sleep(clickTime)
+        time.sleep(moveTime)
 
 
 def E(mapPath = "Emap.txt", moveTime = 0.1):
     global driver
     body = driver.find_element_by_tag_name('body')
-    eMap = open(currentDirectory + mapPath, 'r').read().split('\n')
+    eMap = open(currentDirectory + settingsFolder + mapPath, 'r').read().split('\n')
     dictionariedMap = {}
     for row in range(len(eMap)):
         for symbol in range(len(eMap[row])):
@@ -140,7 +140,7 @@ def R(mapPath = "Rmap.txt", moveTime = 0.1):
     # Разделённые запятыми числа, справа от координат, - номера фигур, которые мы попытаемся расположить на
     # Соответствующих x координатах.
     # (К примеру, '1:2,3' значит, что мы попытаемся расположить фигуру#2 и фигуру#3 на столбце#1) (Отсчёт с нуля).
-    rMap = open(currentDirectory + mapPath, 'r').read().split('\n')
+    rMap = open(currentDirectory + settingsFolder + mapPath, 'r').read().split('\n')
     dictionariedMap = {}
     for i in range(len(rMap)):
         row = rMap[i].split(':')
@@ -233,7 +233,9 @@ def exc(moveTime = 0.5):
 
     for cell in neededCells:
         time.sleep(moveTime)
-        driver.execute_script("""arguments[0].innerHTML = '""" + "<img style = \"width: 100%; height: 100%;\" src = \\'" + screenshotFolder.replace('\\','/') + "screenshot" + str(currentScreenshotId+1) + ".png" +"\\'>" + "'", cell)
+        driver.execute_script("""arguments[0].innerHTML = '""" + "<img style = \"width: 100%; height: 100%;\" src = \\'"
+                              + screenshotFolder.replace('\\', '/') + "screenshot" + str(currentScreenshotId+1) + ".png"
+                              + "\\'>" + "'", cell)
         currentScreenshotId = (currentScreenshotId+1) % screenshotsTaken
 
 
@@ -302,24 +304,43 @@ def L2(config = "1/1:-45|1/99:45|1/50:45|1/50:-45", radius = 10):
     global driver
     body = driver.find_element_by_tag_name('body')
     size = body.size
-    center = {}
-    center['width']=size['width']/2
-    center['height']=size['height']/2
     click = ActionChains(driver).click()
     for singularConfig in config.split('|'):
         coords, angle = singularConfig.split(':')
         coords = [(int(i)/100) for i in coords.split('/')]
         coords[0] *= size['width']
         coords[1] *= size['height']
-        print(coords)
         angle = int(angle)
-        print(size['height'])
         firstPosition = ActionChains(driver).move_to_element_with_offset(body, coords[0], coords[1])
         secondPosition = ActionChains(driver).move_to_element_with_offset(body, coords[0] + math.cos(math.radians(angle))*radius, coords[1] + math.sin(math.radians(angle))*radius)
         firstPosition.perform()
         click.perform()
         secondPosition.perform()
         click.perform()
+
+def O2(config = "0.19/0/0|-0.19/0/100"):
+    global driver
+    inputers = driver.find_elements_by_class_name('inputer')
+    button = driver.find_element_by_tag_name('button')
+    for singularConfig in config.split('|'):
+        nums = singularConfig.split('/')
+        for i in range(len(nums)):
+            inputers[i].send_keys(Keys.BACKSPACE*5 + nums[i])
+        button.click()
+
+def L3(moveTime = 0.01,amountOfClicks = 50):
+    global driver
+    body = driver.find_element_by_tag_name('body')
+    size = body.size
+    size['width']*=0.4
+    click = ActionChains(driver).click()
+    for _ in range (amountOfClicks):
+        x = randrange(0,int(size['width'])-1)
+        y = randrange(0,int(size['height'])-1)
+        ActionChains(driver).move_to_element_with_offset(body, x, y).perform()
+        click.perform()
+        time.sleep(moveTime)
+
 
 
 class LetterScript:
@@ -346,10 +367,12 @@ class LetterScript:
     def executeScript(self):
         global driver
 
+        driver.get(self.path)
+
         if hasattr(self,'waitBefore'):
             time.sleep(self.waitBefore)
 
-        driver.get(self.path)
+
         eval(self.letter+self.args)
 
         if hasattr(self,'waitAfter'):
@@ -362,6 +385,10 @@ def takeScreenshot():
     global currentDirectory
     global screenshotsTaken
     myScreenshot = pyautogui.screenshot()
+    try:
+        os.mkdir(currentDirectory + screenshotFolder)
+    except:
+        print("dir already exists...")
     myScreenshot.save(currentDirectory + screenshotFolder + 'screenshot' + str(screenshotsTaken + 1) + ".png")
     screenshotsTaken += 1
 
@@ -371,6 +398,7 @@ def setup():
     global task_list
     global currentDirectory
     # Make sure the server is created at current directory
+    #os.chdir('..') UNCOMMENT WHEN RELEASE
     currentDirectory = os.getcwd() + '\\'
 
 
@@ -391,7 +419,7 @@ def setup():
     x.start()
 
     task_list = []
-    settings = open(currentDirectory + 'settings.txt', 'r').read().split('\n')
+    settings = open(currentDirectory + settingsFolder + 'settings.txt', 'r').read().split('\n')
     for i in settings:
         args = i.split(',')
         letterInfo = args[0].split('=')
@@ -422,4 +450,3 @@ for task in task_list:
 
 
 driver.close()
-time.sleep(100)
