@@ -1,3 +1,5 @@
+'L2'='L2/index.html','waitAfter'='8','config'=' "1/1:-45|1/99:45|1/50:45|1/50:-45"'
+'exc'='exc/index.html','waitAfter'='5','moveTime'='0.5'
 'L'='L/index.html','waitAfter'='3','moveTime'='0.01','wordAmount' = '100','wordsAtOnce'='10'
 'O'='O/index.html','waitAfter'='1','moveTime'='0.1','minMove'='20','maxMove'='40','radius'='200', 'radiusRandomness' = '41', 'fullCircles' = '3'
 'SPACE'='SPACE/index.html','waitAfter'='5'

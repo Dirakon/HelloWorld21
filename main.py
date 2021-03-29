@@ -266,7 +266,6 @@ def SPACE():
 
 def L(moveTime = 0.01, wordAmount = 1000, wordsAtOnce = 10):
     global driver
-    body = driver.find_element_by_tag_name('body')
 
     window_before = driver.current_window_handle
 
@@ -299,6 +298,30 @@ def L(moveTime = 0.01, wordAmount = 1000, wordsAtOnce = 10):
             time.sleep(moveTime)
 
 
+def L2(config = "1/1:-45|1/99:45|1/50:45|1/50:-45", radius = 10):
+    global driver
+    body = driver.find_element_by_tag_name('body')
+    size = body.size
+    center = {}
+    center['width']=size['width']/2
+    center['height']=size['height']/2
+    click = ActionChains(driver).click()
+    for singularConfig in config.split('|'):
+        coords, angle = singularConfig.split(':')
+        coords = [(int(i)/100) for i in coords.split('/')]
+        coords[0] *= size['width']
+        coords[1] *= size['height']
+        print(coords)
+        angle = int(angle)
+        print(size['height'])
+        firstPosition = ActionChains(driver).move_to_element_with_offset(body, coords[0], coords[1])
+        secondPosition = ActionChains(driver).move_to_element_with_offset(body, coords[0] + math.cos(math.radians(angle))*radius, coords[1] + math.sin(math.radians(angle))*radius)
+        firstPosition.perform()
+        click.perform()
+        secondPosition.perform()
+        click.perform()
+
+
 class LetterScript:
     def __init__(self, letter, path, args):
         self.letter = letter
@@ -329,10 +352,10 @@ class LetterScript:
         driver.get(self.path)
         eval(self.letter+self.args)
 
-        takeScreenshot()
-
         if hasattr(self,'waitAfter'):
             time.sleep(self.waitAfter)
+
+        takeScreenshot()
 
 
 def takeScreenshot():
