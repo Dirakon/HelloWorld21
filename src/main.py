@@ -81,7 +81,7 @@ def H(moveTime = 0.1):
         time.sleep(moveTime)
 
 
-def E(mapPath = "Emap.txt", moveTime = 0.1):
+def E(mapPath = "mapOfE.txt", moveTime = 0.1):
     global driver
 
     # Находим тело сайта, на которое будем посылать нажатие клавиш
@@ -293,7 +293,7 @@ def O(moveTime = 0.1, minMove = 20, maxMove = 40, radius = 100, radiusRandomness
         time.sleep(moveTime)
 
 
-def R(mapPath = "Rmap.txt", moveTime = 0.1):
+def R(mapPath = "mapOfR.txt", moveTime = 0.1):
     global driver
 
     body = driver.find_element_by_tag_name('body')
@@ -415,7 +415,7 @@ def D(song = "D|0.5|hD|2.0", newVolume = 25):
 
 
 # '!'
-def exc(moveTime = 0.5, soundPath = "sound.mp3"):
+def exc(moveTime = 0.5):
     global driver
     global currentDirectory
     global screenshotsTaken
@@ -570,7 +570,7 @@ def setup():
     currentDirectory = os.getcwd() + '\\'
 
     # Переходим в папку сервера, чтобы начать его
-    os.chdir('D:\\Projects\\WebstormProjects\\HW21\\HnoReact')
+    os.chdir(currentDirectory + 'src\\')
 
     # Настраиваем сервер
     PORT = 1337
